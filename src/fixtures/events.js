@@ -28,3 +28,31 @@ export const startChangeStop = [
     time: 1548888795945
   }
 ];
+
+export const startChangeStillRunning = [
+  {
+    id: 'dd3e7679-f35a-445d-a35a-8387ebaa5a6e',
+    time: 1548950446486,
+    designation: 'execution'
+  },
+  {
+    id: '1cc3c81a-973f-4c8a-83fd-6b57eb6f898c',
+    time: 1548950465494,
+    designation: 'execution'
+  },
+  {
+    id: '434cc363-3a6f-49cd-bfd6-b49e9c6def2d',
+    time: 1548950697828,
+    designation: 'support'
+  },
+  {
+    id: '83301565-c169-4097-8338-3d42ecb4360a',
+    time: 1548950705211,
+    designation: 'planning'
+  },
+  {
+    id: '2a378ce5-6afa-477f-92a7-219f33ed306b',
+    time: 1548954060950,
+    designation: 'admin'
+  }
+];

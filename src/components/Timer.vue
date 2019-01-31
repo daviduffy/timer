@@ -29,6 +29,7 @@ import Designation from '@/components/Designation';
 import { uuid } from '@/utils';
 import { getAggregate } from '@/services/eventStream';
 import designations from '@/fixtures/designations';
+import { getEvents, setEvents } from '@/services/localStorage';
 
 export default {
   name: 'Timer',
@@ -45,16 +46,15 @@ export default {
   components: {
     Designation
   },
+  beforeMount: function () {
+
+  },
   methods: {
     setStartTime() {
-      this.startTime = dayjs().valueOf();
+      this.$store.commit('setStartTime');
     },
     startTimer() {
-      this.setStartTime();
-      this.time = dayjs().valueOf();
-      this.timer = setInterval(() => {
-        this.time = dayjs().valueOf();
-      }, 1000);
+      this.$store.commit('startTimer');
     },
     getDuration(designation) {
       let currentDuration;
@@ -81,13 +81,14 @@ export default {
     },
     handleSelectDesignation(selected) {
       const action = (this.currentDesignation === selected) ? 'stop' : 'start';
-      // add an event to the 
+      // add an event to the stream
       const event = {
         id: uuid(),
         time: dayjs().valueOf(),
         designation: selected
       }
-      this.events = [...this.events, event];
+      const nextEvents = [...this.events, event]
+      this.events = nextEvents;
 
       // user clicked on the currently-selected designation, presumably to turn off the timer
       let nextDesignation;
@@ -104,6 +105,7 @@ export default {
         this.startTimer();
         nextDesignation = selected;
       }
+      setEvents(nextEvents);
       this.currentDesignation = nextDesignation;
     },
     setAggregate() {
