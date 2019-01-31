@@ -1,19 +1,14 @@
 <template>
-  <div>
-    <p>
-      <span>{{ day }}, </span>
-      <span>working on: {{ currentDesignation || "nothin'" }}</span>
-    </p>
+  <div class="Timer">
     <ul>
       <Designation
-        v-for="designation in designations"
+        v-for="d in designations"
         v-on:select="handleSelectDesignation"
-        :key="designation"
-        :designation="designation"
-        :active="currentDesignation === designation"
-        :duration="getDuration(designation)"
+        :key="d"
+        :designation="d"
+        :active="d === designation"
+        :duration="getDuration(d)"
       />
-      <li>{{ total }}</li>
     </ul>
   </div>
 </template>
@@ -33,33 +28,29 @@ import { getEvents, setEvents } from '@/services/localStorage';
 
 export default {
   name: 'Timer',
-  data: () => ({
-    aggregate: getAggregate({ designations }),
-    currentDesignation: '',
-    day: dayjs().format('MMM DD'),
-    designations,
-    startTime: null,
-    timer: null,
-    time: null,
-    events: []
-  }),
   components: {
     Designation
   },
-  beforeMount: function () {
-
-  },
   methods: {
-    setStartTime() {
-      this.$store.commit('setStartTime');
+    addEvent(designation) {
+      const event = {
+        id: uuid(),
+        time: dayjs().valueOf(),
+        designation: designation
+      }
+      this.$store.commit('addEvent', event);
     },
     startTimer() {
+      this.$store.commit('setStartTime');
       this.$store.commit('startTimer');
+    },
+    setDesignation(designation) {
+      this.$store.commit('setDesignation', designation);
     },
     getDuration(designation) {
       let currentDuration;
       // this is the currently-running timer
-      if (this.currentDesignation === designation) {
+      if (this.designation === designation) {
         // this will display weird shit after 24 hours
         const prevDuration = this.aggregate[designation] || 0;
         currentDuration = (this.time - this.startTime) + prevDuration;
@@ -72,71 +63,74 @@ export default {
       return humanDuration;
     },
     stopTimer() {
-      clearInterval(this.timer);
-      this.setAggregate();
-      this.timer = null;
+      this.$store.commit('stopTimer');
+      this.$store.commit('setAggregate');
     },
-    handleToggleConfig() {
-      this.expanded = !this.expanded;
-    },
-    handleSelectDesignation(selected) {
-      const action = (this.currentDesignation === selected) ? 'stop' : 'start';
-      // add an event to the stream
-      const event = {
-        id: uuid(),
-        time: dayjs().valueOf(),
-        designation: selected
-      }
-      const nextEvents = [...this.events, event]
-      this.events = nextEvents;
+    handleSelectDesignation(designation) {
 
-      // user clicked on the currently-selected designation, presumably to turn off the timer
-      let nextDesignation;
+      // always add an event
+      this.addEvent(designation);
 
-      // always stop the timer on a click no matter what. it's always changing state somehow.
+      // always save the latest state
+      setEvents(this.events);
+
+      // always stop the timer regardless
       this.stopTimer();
 
-      // turn off the timer and clear designation
+      // figure out if this is a stop or a start/switch action
+      const action = (this.designation === designation) ? 'stop' : 'start';
+      let nextDesignation;
+
       if (action === 'stop') {
         nextDesignation = '';
-
-      // otherwiser start timer on current designation
+      // start timer again if a new designation was selected
       } else {
         this.startTimer();
-        nextDesignation = selected;
+        nextDesignation = designation;
       }
-      setEvents(nextEvents);
-      this.currentDesignation = nextDesignation;
+      this.$store.commit('setDesignation', nextDesignation);
     },
     setAggregate() {
       this.aggregate = getAggregate({ designations: this.designations, events: this.events });
     }
   },
   computed: {
-    total() {
-      const total = Object.values(this.aggregate)
-        .reduce((total, curr) => {
-          total += curr;
-          return total;
-        }, 0);
-      return dayjs(total).format('mm:ss');
+    aggregate() {
+      return this.$store.state.aggregate;
+    },
+    events() {
+      return this.$store.state.events;
+    },
+    designation() {
+      return this.$store.state.designation;
+    },
+    day() {
+      return this.$store.state.day;
+    },
+    designations() {
+      return this.$store.state.designations;
     },
     toggleText() {
       return `${this.expanded ? 'hide' : 'show'} config`;
+    },
+    startTime() {
+      return this.$store.state.startTime;
+    },
+    timer() {
+      return this.$store.state.timer;
+    },
+    time() {
+      return this.$store.state.time;
     }
   }
 };
 </script>
 
 <style lang="sass">
-  body
-    font-family: Helvetica, Tahoma, sans-serif
-    font-size: 16px
-
-  ul
-    list-style: none
-    margin: 0
-    padding: 0
+  .Timer
+    width: calc(100vh - 2rem)
+    max-width: 600px
+    margin: 0 auto
 
   .F__g
     display: flex
@@ -152,5 +146,4 @@ export default {
   .B--un
     border: 0
     background: 0
-
 </style>

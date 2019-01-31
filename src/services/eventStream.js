@@ -1,7 +1,19 @@
+// External Dependencies
+import dayjs from 'dayjs';
+
+// Internal Dependencies
 import { startStop, startChangeStop } from '@/fixtures/events';
 import defaultDesignations from '@/fixtures/designations';
 
-export const getAggregate = ({ designations = [], events = [] }) => {
+function Duration(value) {
+  this.value = value;
+  this.format = () => {
+    const formatString = this.value > 3600000 ? 'hh:mm:ss' : 'mm:ss';
+    this.format = () => dayjs(this.value).format(formatString);
+  };
+}
+
+const getAggregate = ({ designations = [], events = [] }) => {
   const aggregateBase = { total: null };
   const aggregate = designations.reduce((obj, curr) => {
     obj[curr] = 0;
@@ -29,4 +41,4 @@ export const getAggregate = ({ designations = [], events = [] }) => {
 // console.log(getAggregate({ designations: defaultDesignations, events: startStop }));
 // console.log(getAggregate({ designations: defaultDesignations, events: startChangeStop }));
 
-export const bub = '';
+export { Duration, getAggregate };

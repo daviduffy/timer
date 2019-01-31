@@ -14,82 +14,77 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     aggregate: getAggregate({ designations }),
-    currentDesignation: '',
     day: dayjs().format('MMM DD'),
+    designation: '',
     designations,
+    history: getEvents(),
     startTime: null,
     timer: null,
     time: null,
     events: []
   },
   mutations: {
-    setStartTime(state) {
-      state.startTime = dayjs().valueOf();
+    addEvent(state, event) {
+      state.events = [...state.events, event];
+    },
+    setEvents(state, payload) {
+      console.log(payload);
+      state.events = payload;
+    },
+    setStartTime(state, ms) {
+      state.startTime = dayjs(ms).valueOf();
+    },
+    setDesignation(state, designation) {
+      state.designation = designation;
+    },
+    setHistory(state, payload) {
+      state.history = payload;
     },
     startTimer(state) {
-      this.$store.commit('setStartTime');
       state.time = dayjs().valueOf();
       state.timer = setInterval(() => {
         state.time = dayjs().valueOf();
       }, 1000);
     },
-    getDuration(state, designation) {
-      let currentDuration;
-      // this is the currently-running timer
-      if (state.currentDesignation === designation) {
-        // this will display weird shit after 24 hours
-        const prevDuration = state.aggregate[designation] || 0;
-        currentDuration = (state.time - state.startTime) + prevDuration;
-
-      // this is just diplaying the time from the aggregate
-      } else {
-        currentDuration = state.aggregate[designation];
-      }
-      const humanDuration = dayjs(currentDuration).format('mm:ss');
-      return humanDuration;
-    },
     stopTimer(state) {
       clearInterval(state.timer);
-      this.setAggregate();
       state.timer = null;
+      state.startTime = null;
+      state.time = null;
     },
     handleToggleConfig() {
       this.expanded = !this.expanded;
     },
-    handleSelectDesignation(selected) {
-      const action = (this.currentDesignation === selected) ? 'stop' : 'start';
-      // add an event to the stream
-      const event = {
-        id: uuid(),
-        time: dayjs().valueOf(),
-        designation: selected
-      };
-      const nextEvents = [...this.events, event];
-      this.events = nextEvents;
-
-      // user clicked on the currently-selected designation, presumably to turn off the timer
-      let nextDesignation;
-
-      // always stop the timer on a click no matter what. it's always changing state somehow.
-      this.stopTimer();
-
-      // turn off the timer and clear designation
-      if (action === 'stop') {
-        nextDesignation = '';
-
-      // otherwiser start timer on current designation
-      } else {
-        this.startTimer();
-        nextDesignation = selected;
-      }
-      setEvents(nextEvents);
-      this.currentDesignation = nextDesignation;
-    },
-    setAggregate() {
-      this.aggregate = getAggregate({ designations: this.designations, events: this.events });
+    setAggregate(state) {
+      state.aggregate = getAggregate({ designations: state.designations, events: state.events });
     }
   },
   actions: {
+    startRetrieveEvents(context) {
+      const storedEvents = getEvents();
+      // history exists
+      if (Object.keys(storedEvents).length > 0) {
+        context.commit('setHistory', storedEvents);
 
-  },
+        const today = dayjs().startOf('day').valueOf();
+        const todayStream = storedEvents[today];
+
+        // an event stream from today already exists
+        if (todayStream) {
+          context.commit('setEvents', todayStream);
+          context.commit('setAggregate');
+
+          const [secondToLast, last] = todayStream.slice(todayStream.length - 2);
+          const stopped = secondToLast.designation === last.designation;
+
+          // a timer from today is currently running
+          if (!stopped) {
+            context.commit('setStartTime', last.time);
+            context.commit('startTimer');
+            context.commit('setDesignation', last.designation);
+          }
+        }
+      }
+    }
+  }
 });
