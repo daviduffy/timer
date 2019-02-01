@@ -16,11 +16,13 @@
 <script>
 // External Dependencies
 import dayjs from 'dayjs';
+window.dayjs = dayjs;
 
 // Internal Components
 import Designation from '@/components/Designation';
 
 // Internal Dependencies
+import display, { timer } from '@/services/display';
 import { uuid } from '@/utils';
 import { getAggregate } from '@/services/eventStream';
 import designations from '@/fixtures/designations';
@@ -59,8 +61,10 @@ export default {
       } else {
         currentDuration = this.aggregate[designation];
       }
-      const humanDuration = dayjs(currentDuration).format('mm:ss');
-      return humanDuration;
+      const currentStopMoment = dayjs(currentDuration);
+      const secondsDuration = currentStopMoment.diff(dayjs(0), 'seconds');
+      // console.log(secondsDuration);
+      return display(currentStopMoment.unix(), timer);
     },
     stopTimer() {
       this.$store.commit('stopTimer');

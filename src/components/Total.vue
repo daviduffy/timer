@@ -12,6 +12,9 @@
 // External Dependencies
 import dayjs from 'dayjs';
 
+// Internal Dependencies
+import display, { euro } from '@/services/display';
+
 export default {
   name: 'Total',
   computed: {
@@ -40,8 +43,8 @@ export default {
       } else {
         total = aggregateTotal;
       }
-      const format = total > 3599999 ? 'hh:mm:ss' : 'mm:ss';
-      return dayjs(total).format('mm:ss');
+      // const format = total > 3599999 ?  : 'mm[<span>]:ss[</span>]';
+      return display(dayjs(total).unix(), euro);
     }
   }
 };
@@ -50,7 +53,7 @@ export default {
 <style lang="sass" scoped>
   .Total 
     display: flex
-    padding: 0 1rem
+    padding: 0 1rem 1rem
   
   .Total__total
     display: flex

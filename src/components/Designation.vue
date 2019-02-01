@@ -59,6 +59,7 @@ export default {
   .Timer__duration
     flex: 1
     max-width: 100px
+    font-variant-numeric: tabular-nums
 
   .Timer__designation
     flex: 1

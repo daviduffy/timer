@@ -28,7 +28,6 @@ export default new Vuex.Store({
       state.events = [...state.events, event];
     },
     setEvents(state, payload) {
-      console.log(payload);
       state.events = payload;
     },
     setStartTime(state, ms) {
