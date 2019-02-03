@@ -3,11 +3,8 @@
     <ul>
       <Designation
         v-for="d in designations"
-        v-on:select="handleSelectDesignation"
         :key="d"
         :designation="d"
-        :active="d === designation"
-        :duration="getDuration(d)"
       />
     </ul>
   </div>
@@ -34,72 +31,54 @@ export default {
     Designation
   },
   methods: {
-    addEvent(designation) {
-      const event = {
-        id: uuid(),
-        time: dayjs().valueOf(),
-        designation: designation
-      }
-      this.$store.commit('addEvent', event);
-    },
-    startTimer() {
-      this.$store.commit('setStartTime');
-      this.$store.commit('startTimer');
-    },
-    setDesignation(designation) {
-      this.$store.commit('setDesignation', designation);
-    },
     getDuration(designation) {
-      let currentDuration;
-      // this is the currently-running timer
-      if (this.designation === designation) {
-        // this will display weird shit after 24 hours
-        const prevDuration = this.aggregate[designation] || 0;
-        currentDuration = (this.time - this.startTime) + prevDuration;
+      const { aggregate = {} } = this.$store.state;
+      return aggregate[designation];
 
-      // this is just diplaying the time from the aggregate
-      } else {
-        currentDuration = this.aggregate[designation];
-      }
-      const currentStopMoment = dayjs(currentDuration);
-      const secondsDuration = currentStopMoment.diff(dayjs(0), 'seconds');
-      // console.log(secondsDuration);
-      return display(currentStopMoment.unix(), timer);
+      // let currentDuration;
+      // // this is the currently-running timer
+      // if (this.designation === designation) {
+      //   // this will display weird shit after 24 hours
+      //   const prevDuration = this.aggregate[designation] || 0;
+      //   currentDuration = (this.time - this.startTime) + prevDuration;
+
+      // // this is just diplaying the time from the aggregate
+      // } else {
+      //   currentDuration = this.aggregate[designation];
+      // }
+      // const currentStopMoment = dayjs(currentDuration);
+      // const secondsDuration = currentStopMoment.diff(dayjs(0), 'seconds');
+      // // console.log(secondsDuration);
+      // return display(currentStopMoment.unix(), timer);
     },
-    stopTimer() {
-      this.$store.commit('stopTimer');
-      this.$store.commit('setAggregate');
-    },
-    handleSelectDesignation(designation) {
+    // handleSelectDesignation(designation) {
 
-      // always add an event
-      this.addEvent(designation);
+    //   // always add an event
+    //   this.addEvent(designation);
 
-      // always save the latest state
-      setEvents(this.events);
+    //   // always save the latest state
+    //   setEvents(this.events);
 
-      // always stop the timer regardless
-      this.stopTimer();
+    //   // always stop the timer regardless
+    //   this.stopTimer();
 
-      // figure out if this is a stop or a start/switch action
-      const action = (this.designation === designation) ? 'stop' : 'start';
-      let nextDesignation;
+    //   // figure out if this is a stop or a start/switch action
+    //   const action = (this.designation === designation) ? 'stop' : 'start';
+    //   let nextDesignation;
 
-      if (action === 'stop') {
-        nextDesignation = '';
-      // start timer again if a new designation was selected
-      } else {
-        this.startTimer();
-        nextDesignation = designation;
-      }
-      this.$store.commit('setDesignation', nextDesignation);
-    },
-    setAggregate() {
-      this.aggregate = getAggregate({ designations: this.designations, events: this.events });
-    }
+    //   if (action === 'stop') {
+    //     nextDesignation = '';
+    //   // start timer again if a new designation was selected
+    //   } else {
+    //     this.startTimer();
+    //     nextDesignation = designation;
+    //   }
+    //   this.$store.commit('setDesignation', nextDesignation);
+    // }
   },
   computed: {
     aggregate() {
+      // console.log(this.$store.state);
       return this.$store.state.aggregate;
     },
     events() {

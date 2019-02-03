@@ -19,7 +19,7 @@ export default {
   name: 'Total',
   computed: {
     aggregate() {
-      return this.$store.state.aggregate;
+      return this.$store.state.aggregate || {};
     },
     day() {
       return this.$store.state.day;
@@ -29,6 +29,9 @@ export default {
     },
     time() {
       return this.$store.state.time;
+    },
+    timer() {
+      return this.$store.state.timer;
     },
     total() {
       const aggregateTotal = Object.values(this.aggregate)

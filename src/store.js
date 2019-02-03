@@ -5,9 +5,10 @@ import dayjs from 'dayjs';
 
 // Internal Dependencies
 import { uuid } from '@/utils';
-import { getAggregate } from '@/services/eventStream';
+import { Event, TimerEvent, getAggregate } from '@/services/eventStream';
 import designations from '@/fixtures/designations';
 import { getEvents, setEvents } from '@/services/localStorage';
+import * as types from '@/constants/constants';
 
 Vue.use(Vuex);
 
@@ -54,11 +55,41 @@ export default new Vuex.Store({
     handleToggleConfig() {
       this.expanded = !this.expanded;
     },
-    setAggregate(state) {
-      state.aggregate = getAggregate({ designations: state.designations, events: state.events });
+    setAggregate(state, payload) {
+      state.aggregate = payload;
     }
   },
   actions: {
+    startSelectDesignation(context, nextDesignation = '') {
+      // determine if this is start, switch, or stop
+      const { designation: prevDesignation } = context.state;
+      let type;
+      let designation = nextDesignation;
+      if (prevDesignation === '') {
+        type = types.START_TIMER;
+      } else if (nextDesignation === prevDesignation) {
+        type = types.STOP_TIMER;
+        designation = '';
+      } else {
+        type = types.SWITCH_TIMER;
+      }
+      const event = new Event({ type, payload: designation });
+      context.commit('addEvent', event);
+      context.commit('setDesignation', designation);
+      context.dispatch('startSaveEvents');
+      const { id, type: TYPE, payload, createdAt } = event;
+      console.log({ id, type: TYPE, payload, createdAt });
+    },
+    startSaveEvents({ state }) {
+      const databaseName = 'designationTimer';
+      const today = dayjs().startOf('day').valueOf();
+      const prevState = getEvents();
+      const nextState = {
+        ...prevState,
+        [today]: state.events
+      };
+      window.localStorage[databaseName] = JSON.stringify(nextState);
+    },
     startRetrieveEvents(context) {
       const storedEvents = getEvents();
       // history exists
@@ -84,6 +115,12 @@ export default new Vuex.Store({
           }
         }
       }
+    },
+    startReconstituteAggregate(context) {
+      const { designations } = context.state;
+      const events = getEvents();
+      const aggregate = getAggregate({ events, designations });
+      context.commit('setAggregate', aggregate);
     }
   }
 });
