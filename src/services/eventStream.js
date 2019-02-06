@@ -16,13 +16,14 @@ function Duration(value) {
 }
 
 export class Event {
-  constructor({ type, payload }) {
+  constructor({ type, ...rest }) {
     this.type = type;
     this.id = uuid();
     this.createdAt = dayjs().valueOf();
-    if (payload !== undefined) {
-      this.payload = payload;
-    }
+    // pass anything in
+    Object.keys(rest || {}).forEach((key) => {
+      this[key] = rest[key];
+    });
   }
 }
 
@@ -35,19 +36,29 @@ const getAggregate = ({ designations = [], events = {}, today = false }) => {
   // find out if there are existing events for the current day
   const todayStream = today ? events[today] : false;
   if (todayStream) {
-    let prevEvent = false;
+    let prevEvent = null;
     todayStream.forEach((event) => {
       // debugger;
-      // if there is a no previous event, skip everything
+      // only operate if there is a previous event
+      // debugger;
       if (prevEvent) {
-        const { payload: prevDesignation, createdAt: startTime } = prevEvent;
-        const { type: currType, createdAt: endTime } = event;
-        const duration = endTime - startTime;
-        aggregate[prevDesignation] += duration;
-        // if designations are the same, this is a 'stop' not a 'switch'
-        if (currType === types.STOP_TIMER) {
-          prevEvent = false;
-          return;
+        const { designation: prevDesigation, createdAt: startTime } = prevEvent;
+        const { designation: currDesigation, type: currType, createdAt: endTime } = event;
+
+        console.log('outside');
+        if (currType === types.SET_TIMER) {
+          // if this is a reset
+          const { newTotal } = event;
+          aggregate[currDesigation] = newTotal;
+        } else {
+          const duration = endTime - startTime;
+          aggregate[prevDesigation] += duration;
+          console.log('here', prevDesigation, duration, currType);
+          // specifically set prev event to null if this is a stop
+          if (currType === types.STOP_TIMER) {
+            prevEvent = null;
+            return;
+          }
         }
       }
       prevEvent = { ...event };

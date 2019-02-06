@@ -59,25 +59,25 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    startSelectDesignation(context, nextDesignation = '') {
-      // determine if this is start, switch, or stop
+    startSelectDesignation(context, payload) {
+      let { designation, type } = payload;
       const { designation: prevDesignation } = context.state;
-      let type;
-      let designation = nextDesignation;
+
       if (prevDesignation === '') {
         type = types.START_TIMER;
-      } else if (nextDesignation === prevDesignation) {
+      } else if (prevDesignation === designation) {
         type = types.STOP_TIMER;
         designation = '';
       } else {
         type = types.SWITCH_TIMER;
       }
 
-      const event = new Event({ type, payload: designation });
+      const event = new Event({ type, ...payload });
       context.commit('addEvent', event);
       context.commit('stopTimer');
       context.commit('setStartTime', dayjs().valueOf());
       context.commit('setDesignation', designation);
+
       if (type !== types.STOP_TIMER) {
         context.commit('startTimer');
       }
@@ -87,7 +87,17 @@ export default new Vuex.Store({
         });
     },
     startSetDuration(context, payload) {
-
+      const { designation, hours, minutes, seconds } = payload;
+      const oneHour = 3600000;
+      const oneMinute = 60000;
+      const oneSecond = 1000;
+      const newTotal = (hours * oneHour) + (minutes * oneMinute) + (seconds * oneSecond);
+      const event = new Event({ type: types.SET_TIMER, designation, newTotal });
+      context.commit('addEvent', event);
+      context.dispatch('startSaveEvents')
+        .then(() => {
+          context.dispatch('startReconstituteAggregate');
+        });
     },
     startSaveEvents({ state }) {
       const databaseName = 'designationTimer';
@@ -101,6 +111,7 @@ export default new Vuex.Store({
       return Promise.resolve('just need to chain something');
     },
     startRetrieveEvents(context) {
+      console.log('startRetrieveEvents');
       const storedEvents = getEvents();
       // history exists
       if (Object.keys(storedEvents).length > 0) {
@@ -120,12 +131,13 @@ export default new Vuex.Store({
           if (!stopped) {
             context.commit('setStartTime', last.createdAt);
             context.commit('startTimer');
-            context.commit('setDesignation', last.payload);
+            context.commit('setDesignation', last.designation);
           }
         }
       }
     },
     startReconstituteAggregate(context) {
+      console.log('startReconstituteAggregate');
       const { designations, today } = context.state;
       const events = getEvents();
       const aggregate = getAggregate({ events, designations, today });

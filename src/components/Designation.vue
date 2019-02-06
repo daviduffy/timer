@@ -13,7 +13,7 @@
     <TimerInput
       v-if="edit"
       v-on:submit="handleSubmit"
-      v-on:cancel="handleCancel" />
+      v-on:cancel="handleToggle" />
     <div class="Timer__duration" v-else>
       <span class="Timer__digits" v-html="getDuration(duration)"></span>
       <div class="Timer__controls">
@@ -40,10 +40,7 @@ export default {
   },
   data: () => ({
     edit: false,
-    rotation: 0,
-    hours: '02',
-    minutes: '20',
-    seconds: '00'
+    rotation: 0
   }),
   components: {
     TimerInput
@@ -51,30 +48,19 @@ export default {
   methods: {
     handleToggle() {
       this.edit = !this.edit;
-      // this.userInput = duration;
     },
     handleInput({ target }) {
       const { value: VALUE } = target;
       const value = VALUE.replace(/[^0-9]|:/g, '');
       this.userInput = value;
     },
-    handleSubmit() {
-      this.edit = false;
-      console.log('tried to submit');
-      // const payload = {
-      //   designation: this.designation,
-      //   hours: this.hours,
-      //   minutes: this.minutes,
-      //   seconds: this.seconds
-      // };
-      // this.$store.dispatch('start', payload);
-      // this.edit = false;
-    },
-    handleCancel() {
+    handleSubmit({ hours, minutes, seconds }) {
+      const payload = { designation: this.designation, hours, minutes, seconds };
+      this.$store.dispatch('startSetDuration', payload);
       this.edit = false;
     },
     handleClick(nextDesignation) {
-      this.$store.dispatch('startSelectDesignation', nextDesignation);
+      this.$store.dispatch('startSelectDesignation', { designation: nextDesignation });
     },
     getDuration(duration) {
       let totalDuration = dayjs(duration).unix();
@@ -86,8 +72,9 @@ export default {
         totalDuration = totalDuration + dayjs(activeDuration).unix();
         totalEpoch = totalEpoch + activeDuration;
       }
-      const rotation = (dayjs(totalEpoch).format('mm') / 60);
-      this.rotation = ((Math.round(rotation * 100) / 100) * 360) - 34;
+      const minutes = (dayjs(totalEpoch).format('mm') / 60);
+      const rotation = (Math.round(minutes * 100) / 100) * 360;
+      this.rotation = rotation - 34;
       return display(totalDuration, jsx);
     }
   },

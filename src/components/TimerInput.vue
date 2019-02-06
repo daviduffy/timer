@@ -1,11 +1,11 @@
 <template>
   <div class="Timer__duration">
     <div class="Timer__digits">
-      <input class="h" type="number" v-bind="hours" placeholder="HH" />
+      <input class="h" type="number" v-model="hours" placeholder="HH" />
       <span>:</span>
-      <input class="m" type="number" v-bind="minutes" placeholder="MM" />
+      <input class="m" type="number" v-model="minutes" placeholder="MM" />
       <span>:</span>
-      <input class="s" type="number" v-bind="seconds" placeholder="SS" />
+      <input class="s" type="number" v-model="seconds" placeholder="SS" />
     </div>
     <div class="Timer__controls">
       <button class="B" @click="handleSubmit">save</button>
@@ -16,7 +16,7 @@
 
 <script>
 export default {
-  name: "TimerInput",
+  name: 'TimerInput',
   data: () => ({
     hours: '',
     minutes: '',

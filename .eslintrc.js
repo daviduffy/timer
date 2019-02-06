@@ -13,7 +13,8 @@ module.exports = {
     'eol-last': 0,
     'comma-dangle': ['error', 'never'],
     'import/newline-after-import': 0,
-    'no-param-reassign': 0
+    'no-param-reassign': 0,
+    'object-curly-newline': 0
   },
   parserOptions: {
     parser: 'babel-eslint',
