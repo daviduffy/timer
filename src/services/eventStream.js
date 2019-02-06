@@ -26,29 +26,33 @@ export class Event {
   }
 }
 
-const getAggregate = ({ designations = [], events = [] }) => {
+const getAggregate = ({ designations = [], events = {}, today = false }) => {
   const aggregateBase = { total: null };
   const aggregate = designations.reduce((obj, curr) => {
     obj[curr] = 0;
     return obj;
   }, { ...aggregateBase });
-  let prevEvent = false;
-  events.forEach((event) => {
-    // if there is a no previous event, skip everything
-    if (prevEvent) {
-      const { payload: prevDesignation, createdAt: startTime } = prevEvent;
-      const { payload: currDesignation, createdAt: endTime } = event;
-      const duration = endTime - startTime;
-      aggregate[prevDesignation] += duration;
-      // if designations are the same, this is a 'stop' not a 'switch'
-      if (prevDesignation === currDesignation) {
-        prevEvent = false;
-        return;
+  // find out if there are existing events for the current day
+  const todayStream = today ? events[today] : false;
+  if (todayStream) {
+    let prevEvent = false;
+    todayStream.forEach((event) => {
+      // debugger;
+      // if there is a no previous event, skip everything
+      if (prevEvent) {
+        const { payload: prevDesignation, createdAt: startTime } = prevEvent;
+        const { type: currType, createdAt: endTime } = event;
+        const duration = endTime - startTime;
+        aggregate[prevDesignation] += duration;
+        // if designations are the same, this is a 'stop' not a 'switch'
+        if (currType === types.STOP_TIMER) {
+          prevEvent = false;
+          return;
+        }
       }
-    }
-    prevEvent = { ...event };
-  });
-  console.log(aggregate);
+      prevEvent = { ...event };
+    });
+  }
   return aggregate;
 };
 

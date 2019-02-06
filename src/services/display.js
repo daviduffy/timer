@@ -15,4 +15,9 @@ const timer = (h = 0, m = 0, s = 0) => {
   return [d(h), d(m), d(s)].join(':');
 };
 
-export { euro, timer, display as default };
+const jsx = (h = 0, m = 0, s = 0) => {
+  const d = (t, str) => (`<span class="${str}">${('0'+t).slice(-2)}</span>`);
+  return [d(h, 'h'), d(m, 'm'), d(s, 's')].join(`<span class="c">:</span>`);
+};
+
+export { euro, timer, jsx, display as default };

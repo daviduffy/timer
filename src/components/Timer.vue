@@ -5,6 +5,7 @@
         v-for="d in designations"
         :key="d"
         :designation="d"
+        :active="d === designation"
       />
     </ul>
   </div>
@@ -51,34 +52,9 @@ export default {
       // // console.log(secondsDuration);
       // return display(currentStopMoment.unix(), timer);
     },
-    // handleSelectDesignation(designation) {
-
-    //   // always add an event
-    //   this.addEvent(designation);
-
-    //   // always save the latest state
-    //   setEvents(this.events);
-
-    //   // always stop the timer regardless
-    //   this.stopTimer();
-
-    //   // figure out if this is a stop or a start/switch action
-    //   const action = (this.designation === designation) ? 'stop' : 'start';
-    //   let nextDesignation;
-
-    //   if (action === 'stop') {
-    //     nextDesignation = '';
-    //   // start timer again if a new designation was selected
-    //   } else {
-    //     this.startTimer();
-    //     nextDesignation = designation;
-    //   }
-    //   this.$store.commit('setDesignation', nextDesignation);
-    // }
   },
   computed: {
     aggregate() {
-      // console.log(this.$store.state);
       return this.$store.state.aggregate;
     },
     events() {
@@ -129,4 +105,5 @@ export default {
   .B--un
     border: 0
     background: 0
+    padding: 0.2rem 0.8rem
 </style>

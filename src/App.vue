@@ -16,6 +16,7 @@ export default {
   components: { Total },
   beforeMount: function() {
     this.$store.dispatch('startRetrieveEvents');
+    this.$store.dispatch('startReconstituteAggregate');
   }
 };
 </script>
