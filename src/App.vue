@@ -22,6 +22,11 @@ export default {
 </script>
 
 <style lang="sass">
+*,
+*::before,
+*::after
+  box-sizing: border-box
+
 body
   font-family: Helvetica, Tahoma, sans-serif
   -webkit-font-smoothing: antialiased

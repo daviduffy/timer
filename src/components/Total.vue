@@ -27,8 +27,8 @@ export default {
     startTime() {
       return this.$store.state.startTime;
     },
-    time() {
-      return this.$store.state.time;
+    duration() {
+      return this.$store.state.duration;
     },
     timer() {
       return this.$store.state.timer;
@@ -36,18 +36,18 @@ export default {
     total() {
       const aggregateTotal = Object.values(this.aggregate)
         .reduce((total, curr) => {
-          total += curr;
+          total += curr || 0;
           return total;
         }, 0);
       let total;
       // if there is currently a timer, add the duration from the timer
       if (this.startTime) {
-        total = aggregateTotal + (this.time - this.startTime);
+        total = aggregateTotal + this.duration;
       } else {
         total = aggregateTotal;
       }
       // const format = total > 3599999 ?  : 'mm[<span>]:ss[</span>]';
-      return display(dayjs(total).unix(), euro);
+      return display(total, euro);
     }
   }
 };

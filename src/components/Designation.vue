@@ -1,7 +1,7 @@
 <template>
   <li class="Timer__item" :class="{ 'Timer__item--active': active }">
     <button
-      @click="handleClick(designation)"
+      @click="handleClick"
       class="B B--un"
     >
       <svg class="Timer__icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
@@ -10,14 +10,19 @@
       </svg>
     </button>
     
-    <TimerInput
-      v-if="edit"
-      v-on:submit="handleSubmit"
-      v-on:cancel="handleToggle" />
-    <div class="Timer__duration" v-else>
-      <span class="Timer__digits" v-html="getDuration(duration)"></span>
-      <div class="Timer__controls">
-        <button v-if="!active" @click="handleToggle" class="B">edit</button>
+    <div class="Timer__container" @mouseover="handleMouseover" @mouseout="handleMouseout">
+      <TimerInput
+        v-if="edit"
+        v-on:submit="handleSubmit"
+        v-on:cancel="handleToggle" />
+      <div v-else class="Timer__duration">
+        <button
+          class="Timer__digits Timer__digits--display B B--un"
+          @click="handleClick"
+          v-html="getDuration()"></button>
+        <div class="Timer__controls">
+          <button v-if="showEdit" @click="handleToggle" class="B B--un a a--f">adjust time</button>
+        </div>
       </div>
     </div>
     <span class="Timer__designation">{{designation}}</span>
@@ -26,6 +31,7 @@
 
 <script>
 import display, { timer, jsx, euro } from '@/services/display';
+import * as types from '@/constants/constants';
 import TimerInput from '@/components/TimerInput.vue';
 export default {
   props: {
@@ -39,6 +45,7 @@ export default {
     }
   },
   data: () => ({
+    showEdit: false,
     edit: false,
     rotation: 0
   }),
@@ -47,8 +54,11 @@ export default {
   },
   methods: {
     handleToggle() {
+      console.log('toggle');
       this.edit = !this.edit;
     },
+    handleMouseover() { return this.showEdit = true; },
+    handleMouseout() { return this.showEdit = false; },
     handleInput({ target }) {
       const { value: VALUE } = target;
       const value = VALUE.replace(/[^0-9]|:/g, '');
@@ -59,29 +69,44 @@ export default {
       this.$store.dispatch('startSetDuration', payload);
       this.edit = false;
     },
-    handleClick(nextDesignation) {
-      this.$store.dispatch('startSelectDesignation', { designation: nextDesignation });
+    handleClick() {
+      const { designation } = this;
+      const { designation: prevDesignation } = this.$store.state;
+
+      let action, type;
+      switch (prevDesignation) {
+        // if currDesignation is equal to the previous designation
+        case designation:
+          action = 'startStopTimer';
+          type = types.STOP_TIMER;
+          break;
+        case '':
+          action = 'startStartTimer';
+          type = types.START_TIMER;
+          break;
+        default:
+          action = 'startSwitchTimer';
+          type = types.SWITCH_TIMER;
+          break;
+      }
+      this.$store.dispatch(action, { type, designation });
     },
-    getDuration(duration) {
-      let totalDuration = dayjs(duration).unix();
-      let totalEpoch = duration;
+    getDuration() {
+      const historicalDuration = this.$store.state.aggregate[this.designation] || 0;
+      let totalDuration = historicalDuration;
       if (this.active) {
         // add current time minus start time to stored duration
-        const { startTime, time } = this.$store.state
-        const activeDuration = time - startTime;
-        totalDuration = totalDuration + dayjs(activeDuration).unix();
-        totalEpoch = totalEpoch + activeDuration;
+        const { duration: activeDuration } = this.$store.state
+        totalDuration = totalDuration + activeDuration;
       }
-      const minutes = (dayjs(totalEpoch).format('mm') / 60);
+      // also sets the rotation of the clock :(
+      const minutes = (dayjs(totalDuration).format('mm') / 60);
       const rotation = (Math.round(minutes * 100) / 100) * 360;
       this.rotation = rotation - 34;
       return display(totalDuration, jsx);
     }
   },
   computed: {
-    duration() {
-      return this.$store.state.aggregate[this.designation];
-    },
     userInputDigital() {
       return [...this.userInput].reverse().map((num, index) => {
         if (index % 2 === 0 && index !== 0) {
@@ -118,11 +143,15 @@ export default {
     max-width: 1.25rem
     fill: gray
 
-  .Timer__duration
+  .Timer__container
     display: flex
     flex: 2
-    margin-left: 1rem
     max-width: 240px
+
+  .Timer__duration
+    display: flex
+    align-items: center
+    flex: 1
     font-variant-numeric: tabular-nums
   
   .Timer__digits,
@@ -133,9 +162,18 @@ export default {
 
   .Timer__digits
     flex: 1 0 40%
+    min-width: 40%
+    max-width: 40%
+    align-self: stretch
+    color: inherit
+
+  .Timer__digits--display
+    padding-left: 1rem
 
   .Timer__controls
     flex: 1 0 60%
+    min-width: 60%
+    max-width: 60%
 
   .Timer__designation
     flex: 1

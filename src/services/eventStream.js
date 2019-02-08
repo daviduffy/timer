@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 
 // Internal Dependencies
 import * as types from '@/constants/constants';
-import { startStop, startChangeStop } from '@/fixtures/events';
+import { startStop } from '@/fixtures/events';
 import defaultDesignations from '@/fixtures/designations';
 import { uuid } from '@/services/utils';
 
@@ -27,6 +27,23 @@ export class Event {
   }
 }
 
+const addDuration = (projection, { designation, duration }) => ({
+  ...projection,
+  [designation]: (projection[designation] || 0) + duration
+});
+
+const setDuration = (projection, { designation, duration }) => ({
+  ...projection,
+  [designation]: duration
+});
+
+const apply = {
+  [types.START_TIMER]: projection => projection,
+  [types.SWITCH_TIMER]: addDuration,
+  [types.STOP_TIMER]: addDuration,
+  [types.SET_TIMER]: setDuration
+};
+
 const getAggregate = ({ designations = [], events = {}, today = false }) => {
   const aggregateBase = { total: null };
   const aggregate = designations.reduce((obj, curr) => {
@@ -38,14 +55,11 @@ const getAggregate = ({ designations = [], events = {}, today = false }) => {
   if (todayStream) {
     let prevEvent = null;
     todayStream.forEach((event) => {
-      // debugger;
-      // only operate if there is a previous event
-      // debugger;
       if (prevEvent) {
         const { designation: prevDesigation, createdAt: startTime } = prevEvent;
         const { designation: currDesigation, type: currType, createdAt: endTime } = event;
 
-        console.log('outside');
+        // console.log('outside');
         if (currType === types.SET_TIMER) {
           // if this is a reset
           const { newTotal } = event;
@@ -53,7 +67,7 @@ const getAggregate = ({ designations = [], events = {}, today = false }) => {
         } else {
           const duration = endTime - startTime;
           aggregate[prevDesigation] += duration;
-          console.log('here', prevDesigation, duration, currType);
+          // console.log('here', prevDesigation, duration, currType);
           // specifically set prev event to null if this is a stop
           if (currType === types.STOP_TIMER) {
             prevEvent = null;
@@ -67,7 +81,25 @@ const getAggregate = ({ designations = [], events = {}, today = false }) => {
   return aggregate;
 };
 
-// console.log(getAggregate({ designations: defaultDesignations, events: startStop }));
-// console.log(getAggregate({ designations: defaultDesignations, events: startChangeStop }));
+const getProjection = ({ designations = [], events = {}, today = false }) => {
+  const projectionBase = designations.reduce((obj, curr) => {
+    obj[curr] = 0;
+    return obj;
+  }, { today: null });
+  // find out if there are existing events for the current day
+  const todayStream = today ? events[today] : false;
+  if (todayStream) {
+    return todayStream.reduce((obj, event) => {
+      const applyFunc = apply[event.type];
+      return ({
+        ...projectionBase,
+        ...applyFunc(obj, event)
+      });
+    }, {});
+  }
+  return projectionBase;
+};
 
-export { Duration, getAggregate };
+console.log(getProjection({ designations: defaultDesignations, events: startStop, today: 1549180800000 }));
+
+export { Duration, apply, getAggregate, getProjection };
