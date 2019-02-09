@@ -4,10 +4,7 @@
       @click="handleClick"
       class="B B--un"
     >
-      <svg class="Timer__icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
-        <path d="M392.09,122.767l15.446-24.272c6.858-10.778,3.681-25.076-7.097-31.935c-10.777-6.86-25.076-3.681-31.935,7.099 l-15.409,24.215c-22.708-11.316-47.642-18.798-73.962-21.58V46.265h1.448c12.775,0,23.133-10.357,23.133-23.133 S293.356,0,280.581,0h-49.163c-12.775,0-23.133,10.357-23.133,23.133s10.357,23.133,23.133,23.133h1.45v30.029 C123.239,87.885,37.535,180.886,37.535,293.535C37.535,413.997,135.538,512,256,512s218.465-98.003,218.465-218.465 C474.465,224.487,442.259,162.83,392.09,122.767z M256,465.735c-94.951,0-172.2-77.249-172.2-172.2s77.249-172.2,172.2-172.2    s172.2,77.249,172.2,172.2S350.951,465.735,256,465.735z"/>
-        <path class="Timer__minutes" v-bind:style="{ transform: 'rotate(' + rotation + 'deg)'}" d="M333.172,205.084c-9.623-8.397-24.238-7.407-32.638,2.222l-61.964,71.02c-8.399,9.626-7.404,24.24,2.222,32.638 c9.626,8.399,24.24,7.404,32.638-2.222l61.964-71.02C343.794,228.096,342.798,213.484,333.172,205.084z"/>
-      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve" class="Timer__icon"><path d="m392.09,122.767l15.446,-24.272c6.858,-10.778 3.681,-25.076 -7.097,-31.935c-10.777,-6.86 -25.076,-3.681 -31.935,7.099l-15.409,24.215c-22.708,-11.316 -47.642,-18.798 -73.962,-21.58l0,-30.029l1.448,0c12.775,0 23.133,-10.357 23.133,-23.133s-10.358,-23.132 -23.133,-23.132l-49.163,0c-12.775,0 -23.133,10.357 -23.133,23.133s10.357,23.133 23.133,23.133l1.45,0l0,30.029c-109.629,11.59 -195.333,104.591 -195.333,217.24c0,120.462 98.003,218.465 218.465,218.465s218.465,-98.003 218.465,-218.465c0,-69.048 -32.206,-130.705 -82.375,-170.768zm-136.09,342.968c-94.951,0 -172.2,-77.249 -172.2,-172.2s77.249,-172.2 172.2,-172.2s172.2,77.249 172.2,172.2s-77.249,172.2 -172.2,172.2z"/><path class="Timer__hours" v-bind:style="{ transform: 'rotate(' + rotationHours + 'deg) translate(-6%, 6%)'}" stroke="null" d="m322.238757,246.742332c-0.065422,-12.771332 -9.883791,-23.076043 -21.934118,-23.004951l-88.884228,0.517852c-12.047582,0.069856 -21.761779,10.484057 -21.695193,23.258301c0.065879,12.774905 9.88716,23.075558 21.934118,23.004951l88.884228,-0.517852c12.048205,-0.069107 21.760365,-10.482734 21.695193,-23.258301z"/><path stroke="null" class="Timer__minutes" v-bind:style="{ transform: 'rotate(' + rotationMinutes + 'deg)  translate(-10%, 9%)'}" d="m341.2396,228.19734c-0.03502,-12.77149 -10.62917,-22.10918 -26.13524,-22.07862l-117.37408,-0.78115c-20.50253,0.02933 -27.0424,10.4108 -27.00589,23.18521c0.03559,12.77506 8.6335,23.1087 24.13524,23.07862l118.37407,-0.21886c23.50334,-0.02858 28.04058,-10.40948 28.0059,-23.1852z"/></svg>
     </button>
     
     <div class="Timer__container" @mouseover="handleMouseover" @mouseout="handleMouseout">
@@ -47,7 +44,8 @@ export default {
   data: () => ({
     showEdit: false,
     edit: false,
-    rotation: 0
+    rotationMinutes: 0,
+    rotationHours: 0
   }),
   components: {
     TimerInput
@@ -101,8 +99,11 @@ export default {
       }
       // also sets the rotation of the clock :(
       const minutes = (dayjs(totalDuration).format('mm') / 60);
-      const rotation = (Math.round(minutes * 100) / 100) * 360;
-      this.rotation = rotation - 34;
+      const rotationMinutes = (Math.round(minutes * 100) / 100) * 360;
+      this.rotationMinutes = rotationMinutes + 90;
+      const hours = (dayjs(totalDuration).format('hh') / 12);
+      const rotationHours = (Math.round(hours * 100) / 100) * 360;
+      this.rotationHours = rotationHours - 27;
       return display(totalDuration, jsx);
     }
   },
@@ -179,7 +180,8 @@ export default {
     flex: 1
     text-align: left
 
-  .Timer__minutes
-    transform-origin: 49% 58%
+  .Timer__minutes,
+  .Timer__hours
+    transform-origin: 51% 55%
 
 </style>
