@@ -1,5 +1,5 @@
 <template>
-  <div class="Timer">
+  <div class="T">
     <ul>
       <Designation
         v-for="d in designations"
@@ -23,7 +23,6 @@ import Designation from '@/components/Designation';
 import display, { timer } from '@/services/display';
 import { uuid } from '@/utils';
 import { getAggregate } from '@/services/eventStream';
-import { getEvents, setEvents } from '@/services/localStorage';
 
 export default {
   name: 'Timer',
@@ -35,14 +34,14 @@ export default {
       return this.$store.state.designation;
     },
     designations() {
-      return this.$store.state.designations;
+      return this.$store.state.designationsProjection;
     }
   }
 };
 </script>
 
 <style lang="sass">
-  .Timer
+  .T
     width: calc(100vh - 2rem)
     max-width: 600px
     margin: 0 auto

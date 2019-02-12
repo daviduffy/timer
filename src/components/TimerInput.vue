@@ -1,11 +1,11 @@
 <template>
   <div class="Timer__duration">
     <div class="Timer__digits">
-      <input class="h" type="number" v-model="hours" placeholder="HH" />
+      <input class="i i--h" type="number" v-model="hours" placeholder="HH" />
       <span>:</span>
-      <input class="m" type="number" v-model="minutes" placeholder="MM" />
+      <input class="i i--m" type="number" v-model="minutes" placeholder="MM" />
       <span>:</span>
-      <input class="s" type="number" v-model="seconds" placeholder="SS" />
+      <input class="i i--s" type="number" v-model="seconds" placeholder="SS" />
     </div>
     <div class="Timer__controls">
       <button class="B" @click="handleSubmit">save</button>
@@ -41,24 +41,27 @@ export default {
 </script>
 
 <style scoped lang="sass">
-
-  input
+  .i
     all: unset
+    background-color: white
     text-align: right
     flex: 1
     max-width: 2rem
+    border: 1px solid lightgray
+    border-radius: 2px
+    padding: 0.25rem 0.125rem 0.25rem 0
 
-  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button
+  .i[type="number"]::-webkit-outer-spin-button, .i[type="number"]::-webkit-inner-spin-button
     -webkit-appearance: none
     margin: 0
 
-  input[type="number"]
+  .i[type="number"]
     -moz-appearance: textfield
 
   span
     min-width: 0.25rem
 
-  .h
-  .m
-  .s
+  .i--h
+  .i--m
+  .i--s
 </style>

@@ -1,26 +1,25 @@
-// External Dependencies
-import dayjs from 'dayjs';
-
 const databaseName = 'designationTimer';
 
-export const getEvents = () => {
+export const getDB = () => new Promise((res, rej) => {
   const prevJSON = window.localStorage[databaseName];
   let storedState;
   try {
     storedState = JSON.parse(prevJSON);
   } catch (err) {
-    console.warn(err);
+    console.log(Error(err));
     storedState = {};
   }
-  return storedState;
-};
+  res(storedState);
+});
 
-export const setEvents = (stream) => {
-  const today = dayjs().startOf('day').valueOf();
-  const prevState = getEvents();
-  const nextState = {
-    ...prevState,
-    [today]: stream
-  };
-  window.localStorage[databaseName] = JSON.stringify(nextState);
-};
+export const setDB = updates => new Promise((res, rej) => {
+  return getDB()
+    .then((prevState) => {
+      const nextState = {
+        ...prevState,
+        ...updates
+      };
+      window.localStorage[databaseName] = JSON.stringify(nextState);
+      res(nextState);
+    });
+});

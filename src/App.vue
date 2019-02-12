@@ -2,6 +2,7 @@
   <div class="App" id="app">
     <div class="Nav" id="nav">
       <router-link to="/">Timer</router-link> |
+      <router-link to="/config">Config</router-link> |
       <router-link to="/history">History</router-link>
     </div>
     <router-view class="Main" />
@@ -15,8 +16,9 @@ export default {
   name: 'App',
   components: { Total },
   beforeMount: function() {
-    this.$store.dispatch('startRetrieveEvents');
-    this.$store.dispatch('startReconstituteAggregate');
+    this.$store.dispatch('startRetrieveDB')
+      .then(() => this.$store.dispatch('startReconstituteDesignations'))
+      .then(() => this.$store.dispatch('startReconstituteTotals'));
   }
 };
 </script>

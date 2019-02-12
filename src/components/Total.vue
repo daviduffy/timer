@@ -18,9 +18,6 @@ import display, { euro } from '@/services/display';
 export default {
   name: 'Total',
   computed: {
-    aggregate() {
-      return this.$store.state.aggregate || {};
-    },
     day() {
       return this.$store.state.day;
     },
@@ -34,7 +31,7 @@ export default {
       return this.$store.state.timer;
     },
     total() {
-      const aggregateTotal = Object.values(this.aggregate)
+      const aggregateTotal = Object.values(this.totalsProjection)
         .reduce((total, curr) => {
           total += curr || 0;
           return total;
@@ -48,6 +45,9 @@ export default {
       }
       // const format = total > 3599999 ?  : 'mm[<span>]:ss[</span>]';
       return display(total, euro);
+    },
+    totalsProjection() {
+      return this.$store.state.totalsProjection || {};
     }
   }
 };

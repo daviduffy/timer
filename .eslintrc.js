@@ -14,6 +14,7 @@ module.exports = {
     'comma-dangle': ['error', 'never'],
     'import/newline-after-import': 0,
     'no-param-reassign': 0,
+    'no-unused-vars': 1,
     'object-curly-newline': 0
   },
   parserOptions: {

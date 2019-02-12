@@ -4,24 +4,29 @@ import Vuex from 'vuex';
 import dayjs from 'dayjs';
 
 // Internal Dependencies
-import { Event, getAggregate, getProjection, apply } from '@/services/eventStream';
-import designations from '@/fixtures/designations';
-import { getEvents } from '@/services/localStorage';
+import { Event, getTotalsProjection, getDesignationsProjection, apply } from '@/services/eventStream';
+import { getDB, setDB } from '@/services/localStorage';
 import * as types from '@/constants/constants';
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    aggregate: getAggregate({ designations }),
     designation: '',
-    designations,
     duration: null,
     events: [],
-    history: getEvents(),
     startTime: null,
     timer: null,
-    today: dayjs().startOf('day').valueOf()
+    today: dayjs().startOf('day').valueOf(),
+
+    // stream of events related to CRUD of designations
+    designations: [],
+    // stream of timer events, grouped by UNIX time (start of the day)
+    streams: {},
+
+    // projections rendered from event streams
+    designationsProjection: [],
+    totalsProjection: {}
   },
   mutations: {
     recordEvent(state, event) {
@@ -33,8 +38,14 @@ export default new Vuex.Store({
     setDesignation(state, designation) {
       state.designation = designation;
     },
-    setHistory(state, payload) {
-      state.history = payload;
+    setDesignationsProjection(state, payload) {
+      state.designationsProjection = payload;
+    },
+    setStreams(state, payload) {
+      state.streams = payload;
+    },
+    setDesignations(state, payload) {
+      state.designations = payload;
     },
     startTimer(state, startTime = false) {
       const now = dayjs().valueOf();
@@ -54,16 +65,20 @@ export default new Vuex.Store({
     handleToggleConfig() {
       this.expanded = !this.expanded;
     },
+    // TODO remove
     setAggregate(state, payload) {
       state.aggregate = payload;
+    },
+    setTotalsProjection(state, payload) {
+      state.totalsProjection = payload;
     }
   },
   actions: {
     startApplyEvent(context, event) {
       const applyFunc = apply[event.type];
-      const { aggregate: prevProjection } = context.state;
+      const { totalsProjection: prevProjection } = context.state;
       const nextProjection = applyFunc(prevProjection, event);
-      context.commit('setAggregate', nextProjection);
+      context.commit('setTotalsProjection', nextProjection);
     },
     startStartTimer(context, protoEvent) { // type, designation
       const event = new Event({ ...protoEvent });
@@ -101,15 +116,8 @@ export default new Vuex.Store({
     },
     startRecordEvent(context, event) {
       context.commit('recordEvent', event);
-      const databaseName = 'designationTimer';
-      const today = dayjs().startOf('day').valueOf();
-      const prevState = getEvents();
-      const nextState = {
-        ...prevState,
-        [today]: context.state.events
-      };
-      window.localStorage[databaseName] = JSON.stringify(nextState);
-      return Promise.resolve('just need to chain something');
+      const today = dayjs(event.createdAt).startOf('day').valueOf();
+      return setDB({ streams: { [today]: context.state.events } });
     },
     // user is manually over-riding the projected duration for a given designation
     startSetDuration(context, payload) {
@@ -122,35 +130,41 @@ export default new Vuex.Store({
       return context.dispatch('startRecordEvent', event)
         .then(() => context.dispatch('startApplyEvent', event));
     },
-    startRetrieveEvents(context) {
-      const storedEvents = getEvents();
-      // history exists
-      if (Object.keys(storedEvents).length > 0) {
-        context.commit('setHistory', storedEvents);
+    startRetrieveDB(context) {
+      return getDB().then(({ streams, designations }) => {
+        // history exists
+        if (Object.keys(streams).length > 0) {
+          context.commit('setStreams', streams);
 
-        const today = dayjs().startOf('day').valueOf();
-        const todayStream = storedEvents[today];
+          const { today } = context.state;
+          const todayStream = streams[today];
 
-        // an event stream from today already exists
-        if (todayStream && todayStream.length > 0) {
-          context.commit('setEvents', todayStream);
+          // an event stream from today already exists
+          if (todayStream && todayStream.length > 0) {
+            context.commit('setEvents', todayStream);
 
-          const last = todayStream[todayStream.length - 1];
-          const running = last.type !== types.STOP_TIMER;
+            const last = todayStream[todayStream.length - 1];
+            const running = last.type !== types.STOP_TIMER;
 
-          // a timer from today is currently running
-          if (running) {
-            context.commit('startTimer', last.createdAt);
-            context.commit('setDesignation', last.designation);
+            // a timer from today is currently running
+            if (running) {
+              context.commit('startTimer', last.createdAt);
+              context.commit('setDesignation', last.designation);
+            }
           }
         }
-      }
+        return Promise.resolve({ streams, designations });
+      });
     },
-    startReconstituteAggregate(context) {
-      const { today } = context.state;
-      const events = getEvents();
-      const aggregate = getProjection({ events, designations, today });
-      context.commit('setAggregate', aggregate);
+    startReconstituteDesignations(context) {
+      const { designations } = context.state;
+      const designationsProjection = getDesignationsProjection(designations);
+      context.commit('setDesignationsProjection', designationsProjection);
+    },
+    startReconstituteTotals(context) {
+      const { streams, today, designationsProjection } = context.state;
+      const projection = getTotalsProjection({ streams, designations: designationsProjection, today });
+      context.commit('setTotalsProjection', projection);
     }
   }
 });
